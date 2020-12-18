@@ -157,6 +157,76 @@ double dct(int h, int v)
     return value;
 }
 
+
+__global__ void kernel(int * src, double *dst, int h, int v)
+{
+    int x=0,y=0;
+    double value = 0;
+    for(y=0;y<MAX_Y;y++) {
+        for(x=0;x<MAX_X;x++) {
+            double kc = cos((M_PI * v * ((2.0 * y) + 1.0)) / 16.0) * cos((M_PI * h * ((2.0 * x) + 1.0)) / 16.0);
+            value += src[(y * 8) + x] *  kc;
+        }
+    }
+    if ((h==1) && (v==0)) {
+        //printf("\n h1 v0 %lf\n", value);
+    }
+    if ( h == 0) {
+        value *= 0.5 / sqrt(2.0);
+    } else {
+        value *= 0.5;
+    }
+    if (v == 0) {
+        value *= 0.5 / sqrt(2.0);
+    } else {
+        value *= 0.5;
+    }
+	*dst = value;
+}
+void dct_cuda(int* src, double *dst) {
+#if 0
+    int x,y,h,v;
+    for (v=0;v<MAX_Y;v++) {
+        for (h=0;h<MAX_X;h++) {
+            result[(v * MAX_X) + h] = dct(h, v);
+            printf("%lf ", result[(v * MAX_X) + h]);
+        }
+        printf("\n");
+    }
+#else
+
+	int *cuda_src;
+	double *cuda_dst;
+
+	cudaMalloc((void**)&cuda_src, sizeof(int) * 64);
+	cudaMalloc((void**)&cuda_dst, sizeof(double) * 64);
+	cudaMemcpy(cuda_src,src, sizeof(int) * 64, cudaMemcpyHostToDevice);
+
+    int h,v;
+    for (v=0;v<MAX_Y;v++) {
+        for (h=0;h<MAX_X;h++) {
+            
+			kernel<<<1,1>>>(cuda_src, &cuda_dst[(v * MAX_X) + h], h, v);
+            //printf("%lf ", result[(v * MAX_X) + h]);
+        }
+    }
+
+	cudaDeviceSynchronize();
+
+	cudaMemcpy(dst, cuda_dst, sizeof(double) * 64, cudaMemcpyDeviceToHost);
+	cudaFree(cuda_src);
+	cudaFree(cuda_dst);
+
+    for (v=0;v<MAX_Y;v++) {
+        for (h=0;h<MAX_X;h++) {
+            //printf("%lf ", result[(v * MAX_X) + h]);
+            printf("%lf ", dst[(v * MAX_X) + h]);
+        }
+        printf("\n");
+	}
+#endif
+	return;
+}
 double idct(int x, int y)
 {
     int h=0,v=0;
@@ -182,7 +252,7 @@ double idct(int x, int y)
 }
 
 int main(void) {
-    int x,y,h,v;
+    int x,y;
     memset(idct_result, 0x0, sizeof(idct_result));
     printf("orginal\n");
     for (y=0;y<MAX_Y;y++) {
@@ -195,6 +265,9 @@ int main(void) {
 
     printf("dct result\n");
 #if 1
+
+#if 0
+	int h,v;
     for (v=0;v<MAX_Y;v++) {
         for (h=0;h<MAX_X;h++) {
             result[(v * MAX_X) + h] = dct(h, v);
@@ -202,6 +275,11 @@ int main(void) {
         }
         printf("\n");
     }
+#else
+	dct_cuda(org, result);
+
+#endif
+
 #else
 	dct_block_first(org, result);
     for (v=0;v<MAX_Y;v++) {
@@ -213,7 +291,7 @@ int main(void) {
 #endif
 
     printf("\n");
-
+#if 0
     
     printf("idct result\n");
     for (y=0;y<MAX_Y;y++) {
@@ -224,7 +302,7 @@ int main(void) {
         printf("\n");
     }
     printf("\n");
-
+#endif
 
     return 0;
 }

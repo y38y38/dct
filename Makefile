@@ -1,4 +1,7 @@
-dct: dct.c
-	gcc -Wall -o dct dct.c -lm
+#CC=gcc
+CC=nvcc
+
+dct: dct.cu
+	${CC}  -o dct dct.cu -lm
 clean:
 	rm -f dct
