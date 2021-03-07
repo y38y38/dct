@@ -6,6 +6,14 @@
 #define MAX_X   (8)
 #define MAX_Y   (8)
 
+//#define DATA1
+//#define DATA2
+
+
+#define __BUTTERFLY1__
+
+
+#ifdef DATA1
 int org[MAX_X * MAX_Y] =
 {
 -172, -172, -172, -173, -175, -170, -158, -131, 
@@ -17,6 +25,81 @@ int org[MAX_X * MAX_Y] =
 -145, -134, -125, -115, -107, -102, -104, -114, 
 -130, -119, -113, -111, -112, -114, -118, -125, 
 };
+
+#else
+
+int org[MAX_X * MAX_Y] =
+{
+93 ,77, 52, 64, 77, 63, 65, 72, 
+60, 64, 42, 45, 69, 68, 64, 69 ,
+-40, -27, -38, -36, -8, 11, 18, 24, 
+33, 38, 33, 24, 23, 21, 13, 8, 
+89, 92, 92, 84, 78, 70, 59, 57, 
+70, 72, 76, 74, 78, 86, 88, 92, 
+63, 63, 68, 67, 65, 67, 67, 65, 
+64, 65, 70, 70, 68, 65, 64, 66, 
+};
+#endif
+
+int abs22(int val)
+{
+    if (val < 0) {
+        //printf("m\n");
+        return val * -1;
+    } else {
+        //printf("p\n");
+        return val;
+    }
+}
+int max(int a, int b)
+{
+    if( a > b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+double sn( short *data1, short *data2, int num, int bit_num, int * max_diff)
+{
+	int sn_sum;
+	*max_diff = 0;
+	sn_sum = 0;
+	for (int i = 0;i < num; i++) {
+
+		short temp1 = *(data1 + i);
+		short temp2 = *(data2 + i);
+		//temp1 = temp1 >> (16 - bit_num);
+		//temp2 = temp2 >> (16 - bit_num);
+        //printf("%d %d\n",temp1, temp2);
+
+		int a,b;
+		a = (int)temp1;
+		b = (int)temp2;
+
+		int diff;
+		diff = a;
+		diff -= b;
+
+        int abs = abs22(diff);
+        *max_diff = max(*max_diff, abs);
+		int x2 = diff * diff;
+
+		sn_sum += x2;
+
+	}
+	double rmse = (double)sn_sum / num;
+
+	rmse = sqrt(rmse);
+
+	int max = ((1 << bit_num) - 1);
+
+	double psnr = (rmse != 0) ? -20 * log10(rmse/max) : 120;
+
+	return psnr;
+}
+
+
+
 
 void first_dct1(double *in, double *out) {
 	double step1[8];
@@ -55,7 +138,7 @@ void first_dct1(double *in, double *out) {
 	step3[1] = (step2[1] * (-1) * cos(M_PI / 4) ) + (step2[0] * cos(M_PI/4));
 
 	step3[2] = (step2[2] * sin(M_PI / 8)) + ( step2[3] * cos(M_PI/8));
-	step3[3] = (step2[3] * sin( M_PI / 8)) + (step2[2] * (-1) * cos(  M_PI / 8));
+	step3[3] = (step2[3] * cos( 3 * M_PI / 8)) + (step2[2] * (-1) * sin( 3 *  M_PI / 8));
 
 	step3[4] = step2[4] + step2[5];
 	step3[5] = (-1) * step2[5] + step2[4];
@@ -68,9 +151,9 @@ void first_dct1(double *in, double *out) {
 	step4[3] = step3[3];
 
 	step4[4] = (step3[4] * sin(M_PI / 16)) + (step3[7] * cos(M_PI/16));
-	step4[5] = (step3[5] * cos((3 * M_PI) / 16)) + (step3[6] * sin(3 * M_PI/ 16));
+	step4[5] = (step3[5] * sin((5 * M_PI) / 16)) + (step3[6] * cos(5 * M_PI/ 16));
 	step4[6] = (step3[6] * cos((3 * M_PI) / 16)) + (step3[5] * (-1) * sin((3 * M_PI)  / 16));
-	step4[7] = (step3[7] * sin(  M_PI / 16)) + (step3[4] * (-1) * cos(( M_PI) / 16));
+	step4[7] = (step3[7] * cos( 7 *  M_PI / 16)) + (step3[4] * (-1) * sin(( 7 * M_PI) / 16));
 
 	double step5[8];
 	step5[0] = step4[0];
@@ -119,9 +202,17 @@ int dct_block_first(int * block, double *out) {
 	for(i=0;i<64;i+=8) {
 		first_dct1(out2 + i, out3 + i);
 	}
-	for(i=0;i<64;i++) {
-		out[i] = out3[i];
+	for(i=0;i<8;i++) {
+		out[(i*8)] = out3[i];
+		out[(i*8)+1] = out3[8+i];
+		out[(i*8)+2] = out3[16+i];
+		out[(i*8)+3] = out3[24+i];
+		out[(i*8)+4] = out3[32+i];
+		out[(i*8)+5] = out3[40+i];
+		out[(i*8)+6] = out3[48+i];
+		out[(i*8)+7] = out3[56+i];
 	}
+
 	return 0;
 }
 
@@ -157,7 +248,7 @@ double dct(int h, int v)
     return value;
 }
 
-
+#ifdef __CUDA__
 __global__ void kernel(int * src, double *dst, int h, int v)
 {
     int x=0,y=0;
@@ -227,6 +318,8 @@ void dct_cuda(int* src, double *dst) {
 #endif
 	return;
 }
+#endif
+
 double idct(int x, int y)
 {
     int h=0,v=0;
@@ -266,21 +359,12 @@ int main(void) {
     printf("dct result\n");
 #if 1
 
-#if 0
+
 	int h,v;
-    for (v=0;v<MAX_Y;v++) {
-        for (h=0;h<MAX_X;h++) {
-            result[(v * MAX_X) + h] = dct(h, v);
-            printf("%lf ", result[(v * MAX_X) + h]);
-        }
-        printf("\n");
-    }
-#else
+
+#ifdef __CUDA__
 	dct_cuda(org, result);
-
-#endif
-
-#else
+#elif defined(__BUTTERFLY1__)
 	dct_block_first(org, result);
     for (v=0;v<MAX_Y;v++) {
         for (h=0;h<MAX_X;h++) {
@@ -288,10 +372,23 @@ int main(void) {
         }
         printf("\n");
     }
+
+#else
+    for (v=0;v<MAX_Y;v++) {
+        for (h=0;h<MAX_X;h++) {
+            result[(v * MAX_X) + h] = dct(h, v);
+            printf("%lf ", result[(v * MAX_X) + h]);
+        }
+        printf("\n");
+    }
+
+#endif
+
+#else
 #endif
 
     printf("\n");
-#if 0
+#if 1
     
     printf("idct result\n");
     for (y=0;y<MAX_Y;y++) {
@@ -303,6 +400,20 @@ int main(void) {
     }
     printf("\n");
 #endif
+	short in_data[64];
+	short out_data[64];
 
+	for (int i=0;i<64;i++) {
+		in_data[i] = (short)org[i];
+	}
+	printf("out\n");
+	for (int i=0;i<64;i++) {
+		out_data[i] = (short)idct_result[i];
+//		printf("result %d %lf\n", out_data[i], idct_result[i]);
+	}
+	int max_diff;
+	double psnr = sn(in_data, out_data, 64, 10, &max_diff );
+
+	printf("psnr %lf %d\n", psnr, max_diff);
     return 0;
 }

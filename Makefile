@@ -1,7 +1,10 @@
-#CC=gcc
-CC=nvcc
+CC=gcc
+#CC=nvcc
 
-dct: dct.cu
-	${CC}  -o dct dct.cu -lm
+#CFLAGS=  -D__CUDA__
+CFLAGS=  
+
+dct: dct.c
+	${CC}  ${CFLAGS} -o dct dct.c -lm
 clean:
 	rm -f dct
