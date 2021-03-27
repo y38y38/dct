@@ -166,14 +166,14 @@ void first_dct1(double *in, double *out) {
 	step5[7] = step4[7];
 
 
-	out[0] = step5[0] * 0.5;
-	out[1] = step5[1] * 0.5;
-	out[2] = step5[2] * 0.5;
-	out[3] = step5[3] * 0.5;
-	out[4] = step5[4] * 0.5;
-	out[5] = step5[5] * 0.5;
-	out[6] = step5[6] * 0.5;
-	out[7] = step5[7]  * 0.5;
+	out[0] = step5[0] >>1;
+	out[1] = step5[1] >>1;
+	out[2] = step5[2] >>1;
+	out[3] = step5[3] >>1;
+	out[4] = step5[4] >>1;
+	out[5] = step5[5] >>1;
+	out[6] = step5[6] >>1;
+	out[7] = step5[7]  >>1;
 	return;
 
 }
