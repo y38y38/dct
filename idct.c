@@ -48,19 +48,14 @@ int main(int argc, char **argv) {
 
     int x,y;
     memset(idct_result, 0x0, sizeof(idct_result));
-    printf("orginal\n");
 
 #if 1
     
-    printf("idct result\n");
     for (y=0;y<MAX_Y;y++) {
         for (x=0;x<MAX_X;x++) {
             idct_result[(y * MAX_X) + x] = idct(x, y);
-            printf("%lf ", idct_result[(y * MAX_X) + x]);
         }
-        printf("\n");
     }
-    printf("\n");
 #endif
 	FILE *out = fopen(argv[2], "w");
 	
@@ -69,10 +64,8 @@ int main(int argc, char **argv) {
 
 	for (v=0;v<MAX_Y;v++) {
         for (h=0;h<MAX_X;h++) {
-            printf("%f", idct_result[(v * MAX_X) + h]);
 			fprintf(out, "%f\n", idct_result[(v * MAX_X) + h]);
         }
-        printf("\n");
     }
 	fclose(out);
 

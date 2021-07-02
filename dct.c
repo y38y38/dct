@@ -7,28 +7,6 @@
 #define MAX_X   (8)
 #define MAX_Y   (8)
 
-//#define DATA1
-#define DATA2
-
-
-#define __BUTTERFLY1__
-
-
-#ifdef DATA1
-int org[MAX_X * MAX_Y] =
-{
--172, -172, -172, -173, -175, -170, -158, -131, 
--171, -172, -173, -173, -170, -159, -137, -117, 
--172, -172, -171, -166, -154, -136, -117, -103, 
--172, -170, -164, -152, -133, -115, -98 , -94 ,
--170, -165, -153, -136, -113, -96 , -87 , -96 ,
--160, -150, -139, -122, -103, -93 , -91 , -104, 
--145, -134, -125, -115, -107, -102, -104, -114, 
--130, -119, -113, -111, -112, -114, -118, -125, 
-};
-
-#else
-#if 1
 int org[MAX_X * MAX_Y] =
 {
 93 ,77, 52, 64, 77, 63, 65, 72, 
@@ -40,23 +18,6 @@ int org[MAX_X * MAX_Y] =
 63, 63, 68, 67, 65, 67, 67, 65, 
 64, 65, 70, 70, 68, 65, 64, 66, 
 };
-#else
-int org[MAX_X * MAX_Y] =
-{
-0, 1 ,2, 3, 4, 5, 6, 7, 
-8, 9, 10, 11, 12, 13, 14, 15,
-16, 17, 18,19,20,21,22,23,
-24,25,26,27,28,29,30,31,
-32,33,34,35,36,37,38,39,
-40,41,42,43,44,45,46,47,
-48,49,50,51,52,53,54,55,
-56,57,58,59,60,61,62,63,
-};
-
-
-#endif
-
-#endif
 
 #define BAISUU (65536)
 #define MATH_COS_PI_4	 (46340)
@@ -228,15 +189,6 @@ int dct_block_first(int * block, int *out) {
 		out4[(i*8)+6] = (int16_t)out3[48+i];
 		out4[(i*8)+7] = (int16_t)out3[56+i];
 	}
-	int x,y;
-	printf("dct result int\n");
-    for (y=0;y<MAX_Y;y++) {
-        for (x=0;x<MAX_X;x++) {
-            printf("%x ", out4[(y * MAX_X) + x]);
-        }
-        printf("\n");
-    }
-    printf("\n");
 
 	return 0;
 }
@@ -295,21 +247,14 @@ void getinputdata(FILE *in){
 }
 int main(int argc, char **argv) {
 
+	if (argc != 3) {
+		printf("err");
+		return 0;
+	}
 	FILE *in = fopen(argv[1], "r");
 	getinputdata(in);
 	fclose(in);
 
-    int x,y;
-    printf("orginal\n");
-    for (y=0;y<MAX_Y;y++) {
-        for (x=0;x<MAX_X;x++) {
-            printf("%d ", org[(y * MAX_X) + x]);
-        }
-        printf("\n");
-    }
-    printf("\n");
-
-    printf("dct result\n");
 
 
 	FILE *out = fopen(argv[2], "w");
@@ -320,10 +265,8 @@ int main(int argc, char **argv) {
 	dct_block_first(org, result);
     for (v=0;v<MAX_Y;v++) {
         for (h=0;h<MAX_X;h++) {
-            printf("%d ", result[(v * MAX_X) + h]);
 			fprintf(out, "%d\n", result[(v * MAX_X) + h]);
         }
-        printf("\n");
     }
 	fclose(out);
 

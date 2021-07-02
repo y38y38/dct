@@ -88,7 +88,9 @@ int main(int argc, char **argv) {
 	}
 	int max_diff;
 	double psnr = sn(in_data, out_data, 64, 10, &max_diff );
-
+	if (max_diff > 10) {
+		printf("err");
+	}
 	printf("psnr %lf %d\n", psnr, max_diff);
     return 0;
 }
